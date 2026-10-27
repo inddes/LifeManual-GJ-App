@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Heart, Search } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -10,11 +10,15 @@ import { gitaVerses as sampleVerses, type GitaVerse } from '../data/gitaVerses';
 
 export const Mindfulness: React.FC = () => {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedVerse, setSelectedVerse] = useState<GitaVerse | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const heroRef = useScrollAnimation();
   const versesRef = useScrollAnimation();
+
+  const cameFromVerseLink = (location.state as { fromVerseLink?: boolean } | null)?.fromVerseLink === true;
 
   useEffect(() => {
     const chapterParam = searchParams.get('chapter');
@@ -26,6 +30,24 @@ export const Mindfulness: React.FC = () => {
       if (match) setSelectedVerse(match);
     }
   }, [searchParams]);
+
+  const handleClose = useCallback(() => {
+    setSelectedVerse(null);
+    if (cameFromVerseLink) {
+      navigate(-1);
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [cameFromVerseLink, navigate, setSearchParams]);
+
+  useEffect(() => {
+    if (!selectedVerse) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [selectedVerse, handleClose]);
 
   const filteredVerses = sampleVerses.filter(verse =>
     verse.translation.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,7 +112,7 @@ export const Mindfulness: React.FC = () => {
       </section>
 
       {selectedVerse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedVerse(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={handleClose}>
           <div className="bg-spiritual-cream rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6">
               <span className="text-sm font-semibold text-spiritual-gold bg-spiritual-gold/10 px-3 py-1 rounded-full">
@@ -129,7 +151,7 @@ export const Mindfulness: React.FC = () => {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button variant="primary" onClick={() => setSelectedVerse(null)}>
+              <Button variant="primary" onClick={handleClose}>
                 {t.mindfulness.close}
               </Button>
             </div>

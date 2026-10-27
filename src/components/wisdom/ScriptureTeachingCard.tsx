@@ -75,6 +75,7 @@ export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ te
 
             <Link
               to={verseLink}
+              state={{ fromVerseLink: true }}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-spiritual-gold hover:text-spiritual-saffron transition-colors lm-focus-ring"
             >
               <BookOpen className="w-4 h-4" />
