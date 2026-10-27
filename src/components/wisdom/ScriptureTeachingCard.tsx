@@ -1,8 +1,8 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { getTeachingVerse, type ScriptureTeaching } from '../../data/wisdomTopics';
+import { VerseDetailModal } from './VerseDetailModal';
 
 interface ScriptureTeachingCardProps {
   teaching: ScriptureTeaching;
@@ -10,11 +10,10 @@ interface ScriptureTeachingCardProps {
 
 export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ teaching }) => {
   const ref = useScrollAnimation();
+  const [modalOpen, setModalOpen] = useState(false);
   const verse = getTeachingVerse(teaching);
 
   if (!verse) return null;
-
-  const verseLink = `/mindfulness?chapter=${verse.chapter}&verse=${verse.verse}`;
 
   return (
     <>
@@ -73,18 +72,24 @@ export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ te
               </div>
             </div>
 
-            <Link
-              to={verseLink}
-              state={{ fromVerseLink: true }}
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-spiritual-gold hover:text-spiritual-saffron transition-colors lm-focus-ring"
             >
               <BookOpen className="w-4 h-4" />
               Read Full Verse
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </article>
+
+      <VerseDetailModal
+        verse={verse}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </>
   );
 };

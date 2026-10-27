@@ -28,6 +28,7 @@ export const VerseDetailModal: React.FC<VerseDetailModalProps> = ({ verse, isOpe
             Bhagavad Gita {verse.chapter}.{verse.verse}
           </span>
           <button
+            type="button"
             onClick={onClose}
             className="text-spiritual-brown/50 hover:text-spiritual-brown transition-colors lm-focus-ring"
             aria-label="Close"
