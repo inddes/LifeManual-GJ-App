@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { getTeachingVerse, type ScriptureTeaching } from '../../data/wisdomTopics';
@@ -11,7 +11,16 @@ interface ScriptureTeachingCardProps {
 export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ teaching }) => {
   const ref = useScrollAnimation();
   const [modalOpen, setModalOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   const verse = getTeachingVerse(teaching);
+
+  useEffect(() => {
+    if (modalOpen && panelRef.current) {
+      const top =
+        panelRef.current.getBoundingClientRect().top + window.scrollY - 96;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, [modalOpen]);
 
   if (!verse) return null;
 
@@ -25,7 +34,7 @@ export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ te
           {/* Scripture section */}
           <div className="p-6 sm:p-8 border-b border-spiritual-gold/10">
             <div className="flex items-center gap-2 mb-5">
-              <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-spiritual-gold bg-spiritual-gold/10 px-2.5 py-1 rounded">
+              <span className="text-[0.65em] font-bold tracking-[0.2em] uppercase text-spiritual-gold bg-spiritual-gold/10 px-2.5 py-1 rounded">
                 Scripture
               </span>
               <span className="text-sm font-semibold text-spiritual-brown">
@@ -51,7 +60,7 @@ export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ te
           {/* LifeManual reflection section */}
           <div className="p-6 sm:p-8 bg-white">
             <div className="flex items-center gap-2 mb-5">
-              <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-spiritual-brown/50 bg-spiritual-brown/5 px-2.5 py-1 rounded">
+              <span className="text-[0.65em] font-bold tracking-[0.2em] uppercase text-spiritual-brown/50 bg-spiritual-brown/5 px-2.5 py-1 rounded">
                 LifeManual Reflection
               </span>
             </div>
@@ -81,15 +90,17 @@ export const ScriptureTeachingCard: React.FC<ScriptureTeachingCardProps> = ({ te
               Read Full Verse
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            <div ref={panelRef}>
+              <VerseDetailModal
+                verse={verse}
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+              />
+            </div>
           </div>
         </div>
       </article>
-
-      <VerseDetailModal
-        verse={verse}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </>
   );
 };
