@@ -28,7 +28,7 @@ export interface LifeTopic {
 export const lifeTopics: LifeTopic[] = [
   { id: 'anxiety', name: 'Anxiety', description: 'Find calm amidst uncertainty', icon: HeartPulse, link: '/wisdom/anxiety' },
   { id: 'overthinking', name: 'Overthinking', description: 'Quiet the restless mind', icon: Brain, link: '/wisdom/overthinking' },
-  { id: 'anger', name: 'Anger', description: 'Transform heat into clarity', icon: Flame, link: '/mindfulness' },
+  { id: 'anger', name: 'Anger', description: 'Transform heat into clarity', icon: Flame, link: '/wisdom/anger' },
   { id: 'fear', name: 'Fear', description: 'Meet what scares you with courage', icon: ShieldAlert, link: '/mindfulness' },
   { id: 'relationships', name: 'Relationships', description: 'Navigate connection and conflict', icon: Users, link: '/mindfulness' },
   { id: 'failure', name: 'Failure', description: 'Rise with wisdom, not regret', icon: TrendingDown, link: '/mindfulness' },

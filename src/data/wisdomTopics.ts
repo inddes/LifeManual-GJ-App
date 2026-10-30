@@ -248,6 +248,110 @@ export const wisdomTopics: Record<string, WisdomTopic> = {
       },
     ],
   },
+  anger: {
+    slug: 'anger',
+    title: 'Anger',
+    eyebrow: 'Wisdom for Anger',
+    headline: 'When the mind catches fire',
+    introduction:
+      'This journey explores Bhagavad Gita teachings on the restless mind, the pull of attachment to outcomes, the practice of steadiness, and responding thoughtfully rather than reacting. It is not a treatment for anger or any mental health condition. It is an invitation to sit with timeless wisdom and let it speak to your experience.',
+    durationLabel: 'About 10 minutes',
+    understanding: {
+      heading: 'Why does the mind flare, and what does it cost?',
+      paragraphs: [
+        'Anger rarely arrives alone. It often rises when something we expected, wanted, or believed we deserved is blocked, threatened, or disrespected. The heat feels like energy, like clarity, like the truth of the moment, and so it is hard to question even as it begins to steer us.',
+        'In its grip, speech sharpens. A sentence spoken in anger can travel further and last longer than the feeling that produced it. Decisions made in the heat often serve the emotion rather than the situation, and relationships bear the cost long after the fire has cooled.',
+        'The difficulty is not that anger exists. It is that when it speaks for us, we act before we have understood what we are actually responding to, and what we actually want.',
+      ],
+      transition:
+        'The Gita does not ask us to never feel. It asks us to understand what the mind is reaching for when it flares, and to find a steadier place from which to act.',
+    },
+    scriptureTeachings: [
+      {
+        verseRef: { chapter: 2, verse: 14 },
+        whyItMatters:
+          'Anger often treats a passing disturbance as a permanent injury. This verse reminds us that the contacts of the senses bring fleeting perceptions of happiness and distress, coming and going like the seasons. What feels intolerable now is not a fixed condition; it is weather in the mind.',
+        applyItToday:
+          'The next time the heat rises, notice it as something that has come, not something that will stay. Say quietly: this has arrived, and it will pass. Let the season move without demanding that you answer it right now.',
+      },
+      {
+        verseRef: { chapter: 2, verse: 47 },
+        whyItMatters:
+          'Much of anger is attachment to an outcome we expected. This verse draws the line clearly: the action is yours, the result is not. When anger fixates on how things should have gone, it carries a weight the Gita says was never placed on us.',
+        applyItToday:
+          'Take one situation where anger is burning. Separate it into two columns: what is yours to do now, and what is not yours to control. Let the second column sit, unresolved, while you turn to the first.',
+      },
+      {
+        verseRef: { chapter: 6, verse: 35 },
+        whyItMatters:
+          'The Gita names the mind directly: restless, moving, hard to hold. Anger is one of its strongest movements. But the verse offers a path, patient and two-fold, practice and detachment. The flaring mind is not a sign of failure; it is the very condition the Gita addresses.',
+        applyItToday:
+          'When you notice the heat, do not try to force it silent. Instead, bring attention to one simple, concrete thing in this moment, the breath, the ground beneath you, the sound nearby. The point is not to stop the feeling; it is to practice returning.',
+      },
+      {
+        verseRef: { chapter: 9, verse: 27 },
+        whyItMatters:
+          'Anger feeds on undirected heat. This verse offers a redirection: whatever you do, do it as an offering. When the mind has a place to go, a purpose larger than its own grievance, it has less room to circle the wound.',
+        applyItToday:
+          'Choose one ordinary task, writing a line, washing a dish, walking to the door. Before you begin, silently offer it. Do it with full attention, as if it mattered, because in this moment it is the only thing being asked of you.',
+      },
+    ],
+    reflections: [
+      {
+        id: 'r1',
+        question: 'What situation is your mind circling with heat right now?',
+      },
+      {
+        id: 'r2',
+        question: 'What outcome did you expect, that did not arrive?',
+      },
+      {
+        id: 'r3',
+        question: 'What might the anger be protecting or defending?',
+      },
+      {
+        id: 'r4',
+        question: 'Can you notice the heat rising without judging yourself for it, simply as the mind doing what minds do?',
+      },
+    ],
+    practice: {
+      heading: 'A moment to pause before responding',
+      intro:
+        'A short practice to create space between the heat and your response. This will not fit every situation, and it is not a demand to handle anger alone when help is needed. It is one small way to practice steadiness.',
+      steps: [
+        { number: 1, text: 'Sit comfortably and become still. Let the breath settle.' },
+        { number: 2, text: 'Notice the heat in the body and mind, without trying to push it away.' },
+        { number: 3, text: 'Take three slow breaths, letting each exhale be longer than the inhale.' },
+        { number: 4, text: 'Ask: what is genuinely within my control right now?' },
+        { number: 5, text: 'Choose one constructive next action, however small, that is yours to take.' },
+        { number: 6, text: 'Finish with one quiet intention: Let me act with steadiness, not heat.' },
+      ],
+      intention: 'Let me act with steadiness, not heat.',
+      durationSeconds: 120,
+    },
+    relatedContent: [
+      {
+        label: 'Read the related Bhagavad Gita verses',
+        description: 'Browse all available verses with Sanskrit, translation, and commentary.',
+        link: '/mindfulness',
+      },
+      {
+        label: 'Explore the Meditation page',
+        description: 'Guided meditation sessions to practice steadying the restless mind.',
+        link: '/meditation',
+      },
+      {
+        label: 'Visit Step In',
+        description: 'Turn wisdom into daily spiritual practice and reflection.',
+        link: '/stepin',
+      },
+      {
+        label: 'Back to all LifeManual journeys',
+        description: 'Return to the homepage and explore other life situations.',
+        link: '/#what-are-you-facing',
+      },
+    ],
+  },
 };
 
 export const getTopic = (slug: string): WisdomTopic | undefined => wisdomTopics[slug];

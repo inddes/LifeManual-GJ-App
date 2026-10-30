@@ -9,7 +9,6 @@ import { WisdomSection } from '../components/wisdom/WisdomSection';
 import { ReflectionJourney } from '../components/wisdom/ReflectionJourney';
 import { GuidedPractice } from '../components/wisdom/GuidedPractice';
 import { GoDeeperSection } from '../components/wisdom/GoDeeperSection';
-import { SeekerSafetyNote } from '../components/wisdom/SeekerSafetyNote';
 
 export const WisdomJourneyPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -57,7 +56,6 @@ export const WisdomJourneyPage: React.FC = () => {
         durationSeconds={topic.practice.durationSeconds}
       />
       <GoDeeperSection links={topic.relatedContent} />
-      <SeekerSafetyNote />
     </div>
   );
 };
