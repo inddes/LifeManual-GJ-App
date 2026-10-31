@@ -352,6 +352,110 @@ export const wisdomTopics: Record<string, WisdomTopic> = {
       },
     ],
   },
+  fear: {
+    slug: 'fear',
+    title: 'Fear',
+    eyebrow: 'Wisdom for Fear',
+    headline: 'When the ground beneath you feels uncertain',
+    introduction:
+      'This journey explores Bhagavad Gita teachings on acting despite uncertainty, the steadiness of the mind, and trusting what is within your hands. It is not a treatment for fear or any mental health condition. It is an invitation to sit with timeless wisdom and let it speak to your experience.',
+    durationLabel: 'About 10 minutes',
+    understanding: {
+      heading: 'What is fear reaching for, and what does it cost?',
+      paragraphs: [
+        'Fear takes many shapes. It can surface as the fear of failing at something we care about, the fear of an uncertain future we cannot see, the fear of being rejected by those whose acceptance we want, the fear of change that threatens what is familiar, or the fear of losing something we hold dear. In each form, the underlying pull is the same: a wish to guarantee a safe outcome in a world that does not offer guarantees.',
+        'When fear is loud, it reshapes decisions. It narrows what feels possible, steering us away from the very actions that might move us forward. We hesitate, postpone, or quietly abandon what matters, mistaking the avoidance of discomfort for safety.',
+        'The difficulty is not that fear appears. It is that when it speaks for us, we confuse its warning with the truth of what we can and cannot do, and we act smaller than the situation calls for.',
+      ],
+      transition:
+        'The Gita does not promise that fear will vanish. It asks us to understand what the mind is reaching for when it fears, and to find a steadier place from which to act.',
+    },
+    scriptureTeachings: [
+      {
+        verseRef: { chapter: 2, verse: 47 },
+        whyItMatters:
+          'Much of fear is attachment to an outcome we cannot guarantee. This verse draws the line clearly: the action is yours, the result is not. When fear fixates on whether something will succeed, it carries a weight the Gita says was never placed on us.',
+        applyItToday:
+          'Take one situation where fear is holding you back. Separate it into two columns: what is yours to do, and what is not yours to control. Commit to the first column. Let the second sit, unresolved, for now.',
+      },
+      {
+        verseRef: { chapter: 2, verse: 14 },
+        whyItMatters:
+          'Fear often treats an uncertain future as a certainty that has already arrived. This verse reminds us that the contacts of the senses bring fleeting perceptions of happiness and distress, coming and going like the seasons. What feels unbearable now is not a fixed condition; it is weather in the mind.',
+        applyItToday:
+          'When the fear tightens, notice it as something that has come, not something that will stay. Say quietly: this has arrived, and it will pass. Let the season move without needing to resolve every worry it carries.',
+      },
+      {
+        verseRef: { chapter: 6, verse: 35 },
+        whyItMatters:
+          'The Gita names the mind directly: restless, moving, hard to hold. Fear is one of its strongest movements. But the verse offers a path, patient and two-fold, practice and detachment. The anxious mind is not a sign of failure; it is the very condition the Gita addresses.',
+        applyItToday:
+          'When you notice the fear rising, do not try to force it silent. Instead, bring attention to one simple, concrete thing in this moment, the breath, the ground beneath you, the sound nearby. The point is not to stop the feeling; it is to practice returning.',
+      },
+      {
+        verseRef: { chapter: 9, verse: 22 },
+        whyItMatters:
+          'When the future feels heavy, the mind can feel entirely alone in carrying it. This verse offers a different posture: those who worship with single-minded devotion are cared for in full. It does not promise that hardship will not come; it offers trust that one is not facing it unheld.',
+        applyItToday:
+          'Take one fear about the future and hold it quietly, without demanding an answer. Say to yourself: I will do what is mine to do, and I will trust that I am not alone in what I cannot control. Let the intention settle before you move.',
+      },
+    ],
+    reflections: [
+      {
+        id: 'r1',
+        question: 'What is the fear that surfaces most often for you right now?',
+      },
+      {
+        id: 'r2',
+        question: 'Is it a fear of failure, uncertainty, rejection, change, or the future, or something else?',
+      },
+      {
+        id: 'r3',
+        question: 'In this fear, what is genuinely within your control, and what is not?',
+      },
+      {
+        id: 'r4',
+        question: 'How might your decisions change if fear did not speak for you?',
+      },
+    ],
+    practice: {
+      heading: 'A moment to act despite the fear',
+      intro:
+        'A short practice to identify one specific fear, sort what is yours from what is not, and take one mindful step. This will not fit every situation, and it is not a demand to face everything alone when help is needed. It is one small way to practice steadiness.',
+      steps: [
+        { number: 1, text: 'Sit comfortably and become still. Let the breath settle.' },
+        { number: 2, text: 'Identify one specific fear that is present for you right now.' },
+        { number: 3, text: 'Ask: what part of this is genuinely within my control?' },
+        { number: 4, text: 'Ask: what part am I carrying that is not mine to determine?' },
+        { number: 5, text: 'Choose one constructive action, however small, that is yours to take.' },
+        { number: 6, text: 'Take that action mindfully, with one quiet intention: Let me do what is mine, and set down the rest.' },
+      ],
+      intention: 'Let me do what is mine, and set down the rest.',
+      durationSeconds: 120,
+    },
+    relatedContent: [
+      {
+        label: 'Read the related Bhagavad Gita verses',
+        description: 'Browse all available verses with Sanskrit, translation, and commentary.',
+        link: '/mindfulness',
+      },
+      {
+        label: 'Explore the Meditation page',
+        description: 'Guided meditation sessions to practice steadying the restless mind.',
+        link: '/meditation',
+      },
+      {
+        label: 'Visit Step In',
+        description: 'Turn wisdom into daily spiritual practice and reflection.',
+        link: '/stepin',
+      },
+      {
+        label: 'Back to all LifeManual journeys',
+        description: 'Return to the homepage and explore other life situations.',
+        link: '/#what-are-you-facing',
+      },
+    ],
+  },
 };
 
 export const getTopic = (slug: string): WisdomTopic | undefined => wisdomTopics[slug];
