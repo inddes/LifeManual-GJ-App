@@ -7,13 +7,9 @@ import {
   Send,
   PhoneOff,
   Phone,
-  Volume2,
   AlertCircle,
   Loader2,
-  ExternalLink,
   Activity,
-  CheckCircle2,
-  ShieldAlert,
 } from 'lucide-react';
 import { useVapiWidget } from '@vapi-ai/client-sdk-react';
 import '@vapi-ai/client-sdk-react/styles';
@@ -32,6 +28,7 @@ const isConfigured =
 
 const WELCOME_MESSAGE =
   'Hello and welcome to LifeManual. I\u2019m your AI companion. How can I help you today?';
+const VAPI_DEBUG = import.meta.env.DEV && import.meta.env.VITE_VAPI_DEBUG === 'true';
 
 type Tab = 'chat' | 'voice';
 type ConnStatus = 'disconnected' | 'connecting' | 'connected';
@@ -40,10 +37,10 @@ export const VapiAIWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('chat');
   const [chatInput, setChatInput] = useState('');
-  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [hasEndedCall, setHasEndedCall] = useState(false);
 
-  const { diagnostic, checkMicrophone, setUserTranscriptReceived, reset: resetDiagnostic } =
-    useMicDiagnostic();
+  const { checkMicrophone, setUserTranscriptReceived } = useMicDiagnostic();
 
   const transcriptReceivedRef = useRef(false);
   const userTranscriptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,14 +53,19 @@ export const VapiAIWidget: React.FC = () => {
     onCallStart: () => {
       transcriptReceivedRef.current = false;
       setUserTranscriptReceived(false);
-      if (userTranscriptTimeoutRef.current) clearTimeout(userTranscriptTimeoutRef.current);
-      userTranscriptTimeoutRef.current = setTimeout(() => {
-        if (!transcriptReceivedRef.current) {
-          setShowDiagnostic(true);
-        }
-      }, 12000);
+      setVoiceError(null);
+      setHasEndedCall(false);
+      if (VAPI_DEBUG) {
+        if (userTranscriptTimeoutRef.current) clearTimeout(userTranscriptTimeoutRef.current);
+        userTranscriptTimeoutRef.current = setTimeout(() => {
+          if (!transcriptReceivedRef.current) {
+            console.debug('[Vapi widget] no user transcript received after 12 seconds');
+          }
+        }, 12000);
+      }
     },
     onCallEnd: () => {
+      setHasEndedCall(true);
       if (userTranscriptTimeoutRef.current) {
         clearTimeout(userTranscriptTimeoutRef.current);
         userTranscriptTimeoutRef.current = null;
@@ -75,13 +77,18 @@ export const VapiAIWidget: React.FC = () => {
         const role = message.role as string | undefined;
         if (role === 'user') {
           transcriptReceivedRef.current = true;
-          setUserTranscriptReceived(true);
+          if (VAPI_DEBUG) {
+            setUserTranscriptReceived(true);
+            console.debug('[Vapi widget] user transcript received');
+          }
         }
       }
     },
     onError: (error: Error) => {
-      console.error('[Vapi widget] error:', error.message);
-      setShowDiagnostic(true);
+      setVoiceError(error.message || 'The voice conversation could not connect. Please try again.');
+      if (import.meta.env.DEV && import.meta.env.VITE_VAPI_DEBUG === 'true') {
+        console.debug('[Vapi widget] voice error:', error.message);
+      }
     },
   });
 
@@ -118,20 +125,14 @@ export const VapiAIWidget: React.FC = () => {
     >
       <VapiPanel
         activeTab={activeTab}
-        onTabChange={(tab) => {
-          if (tab === 'voice' && activeTab === 'chat') {
-            resetDiagnostic();
-          }
-          setActiveTab(tab);
-        }}
+        onTabChange={setActiveTab}
         widget={widget}
         chatInput={chatInput}
         onChatInputChange={setChatInput}
         onClose={() => setIsOpen(false)}
-        diagnostic={diagnostic}
+        voiceError={voiceError}
+        hasEndedCall={hasEndedCall}
         onCheckMic={checkMicrophone}
-        showDiagnostic={showDiagnostic}
-        onToggleDiagnostic={() => setShowDiagnostic(!showDiagnostic)}
       />
     </VapiFloatingButton>
   );
@@ -186,11 +187,10 @@ const VapiPanel: React.FC<{
   chatInput: string;
   onChatInputChange: (value: string) => void;
   onClose: () => void;
-  diagnostic: ReturnType<typeof useMicDiagnostic>['diagnostic'];
-  onCheckMic: () => void;
-  showDiagnostic: boolean;
-  onToggleDiagnostic: () => void;
-}> = ({ activeTab, onTabChange, widget, chatInput, onChatInputChange, onClose, diagnostic, onCheckMic, showDiagnostic, onToggleDiagnostic }) => {
+  voiceError: string | null;
+  hasEndedCall: boolean;
+  onCheckMic: () => Promise<void>;
+}> = ({ activeTab, onTabChange, widget, chatInput, onChatInputChange, onClose, voiceError, hasEndedCall, onCheckMic }) => {
   return (
     <div className="fixed bottom-20 right-5 z-50 w-[calc(100vw-2.5rem)] max-w-sm bg-spiritual-cream rounded-2xl border border-spiritual-gold/30 shadow-2xl overflow-hidden flex flex-col animate-slide-up">
       <VapiPanelHeader onClose={onClose} />
@@ -212,10 +212,9 @@ const VapiPanel: React.FC<{
         ) : (
           <VoiceTab
             voice={widget.voice}
-            diagnostic={diagnostic}
+            voiceError={voiceError}
+            hasEndedCall={hasEndedCall}
             onCheckMic={onCheckMic}
-            showDiagnostic={showDiagnostic}
-            onToggleDiagnostic={onToggleDiagnostic}
           />
         )}
       </div>
@@ -369,12 +368,11 @@ const ChatBubble: React.FC<{ role: string; content: string }> = ({ role, content
 
 const VoiceTab: React.FC<{
   voice: ReturnType<typeof useVapiWidget>['voice'];
-  diagnostic: ReturnType<typeof useMicDiagnostic>['diagnostic'];
-  onCheckMic: () => void;
-  showDiagnostic: boolean;
-  onToggleDiagnostic: () => void;
-}> = ({ voice, diagnostic, onCheckMic, showDiagnostic, onToggleDiagnostic }) => {
-  const statusText = getVoiceStatusText(voice.connectionStatus, voice.isCallActive, voice.isSpeaking);
+  voiceError: string | null;
+  hasEndedCall: boolean;
+  onCheckMic: () => Promise<void>;
+}> = ({ voice, voiceError, hasEndedCall, onCheckMic }) => {
+  const statusText = getVoiceStatusText(voice.connectionStatus, voice.isCallActive, voice.isSpeaking, hasEndedCall);
   const statusColor = getVoiceStatusColor(voice.connectionStatus, voice.isCallActive);
 
   return (
@@ -410,10 +408,9 @@ const VoiceTab: React.FC<{
               <button
                 onClick={async () => {
                   await onCheckMic();
-                  voice.startCall();
+                  await voice.startCall();
                 }}
-                disabled={!voice.isAvailable}
-                className="flex items-center gap-2 bg-spiritual-gold text-spiritual-darkBrown font-body font-semibold px-6 py-3 rounded-full hover:bg-spiritual-saffron transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-spiritual-gold text-spiritual-darkBrown font-body font-semibold px-6 py-3 rounded-full hover:bg-spiritual-saffron transition-colors"
               >
                 <Phone className="w-4 h-4" />
                 <span>Start Voice Chat</span>
@@ -448,159 +445,29 @@ const VoiceTab: React.FC<{
             )}
           </div>
 
-          {!voice.isAvailable && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 w-full">
-              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
-                Voice is not available. Check your configuration.
-              </p>
+          {voiceError && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 w-full">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-600 leading-relaxed">{voiceError}</p>
             </div>
           )}
         </div>
-
-        <button
-          onClick={onToggleDiagnostic}
-          className="flex items-center gap-2 text-xs text-spiritual-brown/50 hover:text-spiritual-brown/70 transition-colors w-full justify-center py-2"
-        >
-          <Activity className="w-3.5 h-3.5" />
-          {showDiagnostic ? 'Hide' : 'Show'} Microphone Diagnostic
-        </button>
-
-        {showDiagnostic && (
-          <MicDiagnosticPanel diagnostic={diagnostic} onCheckMic={onCheckMic} />
-        )}
       </div>
     </div>
   );
 };
 
-const MicDiagnosticPanel: React.FC<{
-  diagnostic: ReturnType<typeof useMicDiagnostic>['diagnostic'];
-  onCheckMic: () => void;
-}> = ({ diagnostic, onCheckMic }) => {
-  const statusIcon = (ok: boolean) =>
-    ok ? (
-      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-    ) : (
-      <ShieldAlert className="w-4 h-4 text-red-500 flex-shrink-0" />
-    );
-
-  return (
-    <div className="bg-spiritual-brown/5 border border-spiritual-gold/20 rounded-xl p-4 space-y-2.5">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-heading font-bold text-spiritual-brown uppercase tracking-wide">
-          Microphone Diagnostic
-        </span>
-        <button
-          onClick={onCheckMic}
-          className="text-xs text-spiritual-gold hover:text-spiritual-saffron font-medium"
-        >
-          Re-check
-        </button>
-      </div>
-
-      <DiagnosticRow
-        icon={statusIcon(diagnostic.isSecureContext)}
-        label="Secure context (HTTPS)"
-        value={diagnostic.isSecureContext ? 'Yes' : 'No'}
-      />
-      <DiagnosticRow
-        icon={statusIcon(!diagnostic.isInIframe)}
-        label="Not in iframe"
-        value={diagnostic.isInIframe ? 'Inside iframe' : 'Direct page'}
-      />
-      <DiagnosticRow
-        icon={statusIcon(diagnostic.hasGetUserMedia)}
-        label="Microphone API"
-        value={diagnostic.hasGetUserMedia ? 'Available' : 'Unsupported'}
-      />
-      <DiagnosticRow
-        icon={
-          diagnostic.permissionState === 'granted'
-            ? statusIcon(true)
-            : diagnostic.permissionState === 'denied'
-            ? statusIcon(false)
-            : <Activity className="w-4 h-4 text-amber-500 flex-shrink-0" />
-        }
-        label="Permission state"
-        value={diagnostic.permissionState}
-      />
-      <DiagnosticRow
-        icon={
-          diagnostic.checkStatus === 'ok'
-            ? statusIcon(true)
-            : diagnostic.checkStatus === 'error'
-            ? statusIcon(false)
-            : <Activity className="w-4 h-4 text-spiritual-brown/40 flex-shrink-0" />
-        }
-        label="Audio input detected"
-        value={
-          diagnostic.checkStatus === 'ok'
-            ? 'Yes'
-            : diagnostic.checkStatus === 'checking'
-            ? 'Checking...'
-            : diagnostic.checkStatus === 'idle'
-            ? 'Not checked'
-            : 'No'
-        }
-      />
-      {diagnostic.trackLabel && (
-        <DiagnosticRow
-          icon={<Volume2 className="w-4 h-4 text-spiritual-brown/50 flex-shrink-0" />}
-          label="Microphone device"
-          value={diagnostic.trackLabel}
-        />
-      )}
-      <DiagnosticRow
-        icon={
-          diagnostic.userTranscriptReceived
-            ? statusIcon(true)
-            : <Activity className="w-4 h-4 text-amber-500 flex-shrink-0" />
-        }
-        label="User transcript received"
-        value={diagnostic.userTranscriptReceived ? 'Yes' : 'Waiting...'}
-      />
-
-      {diagnostic.errorMessage && (
-        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
-          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-red-600 leading-relaxed">{diagnostic.errorMessage}</p>
-        </div>
-      )}
-
-      {diagnostic.isInIframe && diagnostic.checkStatus === 'error' && (
-        <button
-          onClick={() => window.open(window.location.href, '_blank')}
-          className="flex items-center gap-2 w-full justify-center bg-spiritual-brown text-spiritual-lightGold text-sm font-body font-medium px-4 py-2.5 rounded-full hover:bg-spiritual-darkBrown transition-colors mt-2"
-        >
-          <ExternalLink className="w-4 h-4" />
-          Open in New Tab
-        </button>
-      )}
-    </div>
-  );
-};
-
-const DiagnosticRow: React.FC<{
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}> = ({ icon, label, value }) => (
-  <div className="flex items-center justify-between gap-2">
-    <div className="flex items-center gap-2">
-      {icon}
-      <span className="text-xs text-spiritual-brown/70">{label}</span>
-    </div>
-    <span className="text-xs font-medium text-spiritual-brown capitalize">{value}</span>
-  </div>
-);
-
-function getVoiceStatusText(conn: ConnStatus, isCallActive: boolean, isSpeaking: boolean): string {
+function getVoiceStatusText(
+  conn: ConnStatus,
+  isCallActive: boolean,
+  isSpeaking: boolean,
+  hasEndedCall: boolean,
+): string {
   if (conn === 'connecting') return 'Connecting...';
-  if (isCallActive && isSpeaking) return 'Speaking';
-  if (isCallActive) return 'Listening';
-  if (conn === 'connected') return 'Connected';
-  return 'Idle';
+  if (isCallActive && isSpeaking) return 'AI is speaking...';
+  if (isCallActive) return 'Listening...';
+  if (hasEndedCall) return 'Call ended';
+  return 'Ready';
 }
 
 function getVoiceStatusColor(conn: ConnStatus, isCallActive: boolean): string {
