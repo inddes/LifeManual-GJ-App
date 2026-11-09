@@ -28,10 +28,10 @@ function formatTime(ts: number): string {
 }
 
 const STATUS_LABELS: Record<VoiceConnectionState, { text: string; color: string }> = {
-  idle: { text: 'Ready to connect', color: 'bg-spiritual-brown/30' },
-  connecting: { text: 'Connecting to AI...', color: 'bg-spiritual-saffron' },
-  connected: { text: 'Live', color: 'bg-green-500' },
-  error: { text: 'Connection error', color: 'bg-red-500' },
+  idle: { text: 'Ended', color: 'bg-spiritual-brown/30' },
+  connecting: { text: 'Connecting...', color: 'bg-spiritual-saffron' },
+  connected: { text: 'Listening', color: 'bg-green-500' },
+  error: { text: 'Error', color: 'bg-red-500' },
 };
 
 const TranscriptLine: React.FC<{ line: VoiceTranscriptLine }> = ({ line }) => {
@@ -92,6 +92,9 @@ export const VapiVoicePanel: React.FC = () => {
   const isBusy = connectionState === 'connecting';
   const configured = isVapiConfigured();
 
+  const statusText =
+    isConnected && isAssistantSpeaking ? 'Speaking' : status.text;
+
   return (
     <div className="flex flex-col h-[600px] bg-spiritual-cream rounded-2xl border border-spiritual-gold/20 overflow-hidden shadow-lg">
       {/* Header */}
@@ -108,7 +111,7 @@ export const VapiVoicePanel: React.FC = () => {
               isConnected ? 'animate-pulse' : ''
             }`}
           />
-          <span className="text-sm text-spiritual-lightGold/70">{status.text}</span>
+          <span className="text-sm text-spiritual-lightGold/70">{statusText}</span>
         </div>
       </div>
 

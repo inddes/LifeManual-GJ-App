@@ -20,18 +20,6 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const HANDLERS = new Set<keyof VapiEventHandlers>();
-
-interface VapiEventHandlers {
-  'call-start': () => void;
-  'call-end': () => void;
-  'speech-start': () => void;
-  'speech-end': () => void;
-  'volume-level': (volume: number) => void;
-  message: (message: Record<string, unknown>) => void;
-  error: (e: Record<string, unknown>) => void;
-}
-
 export function useVapiVoice() {
   const [connectionState, setConnectionState] = useState<VoiceConnectionState>('idle');
   const [transcripts, setTranscripts] = useState<VoiceTranscriptLine[]>([]);
