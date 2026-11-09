@@ -10,6 +10,7 @@ export const hi = {
     stepIn: "कदम रखें",
     about: "हमारे बारे में",
     contact: "संपर्क करें",
+    aiAgent: "एआई एजेंट",
     signIn: "साइन इन करें",
     signUp: "साइन अप करें",
     signOut: "साइन आउट करें",

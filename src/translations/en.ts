@@ -10,6 +10,7 @@ export const en = {
     stepIn: "StepIn",
     about: "About",
     contact: "Contact",
+    aiAgent: "AI Agent",
     signIn: "Sign In",
     signUp: "Sign Up",
     signOut: "Sign Out",

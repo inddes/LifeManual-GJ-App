@@ -10,6 +10,7 @@ export const fr = {
     stepIn: "Entrer",
     about: "À Propos",
     contact: "Contact",
+    aiAgent: "Agent IA",
     signIn: "Se Connecter",
     signUp: "S'Inscrire",
     signOut: "Se Déconnecter",

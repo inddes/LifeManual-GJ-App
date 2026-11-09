@@ -1,2 +1,8 @@
 [functions.fetch-bg-verse]
 verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = true
+
+[functions.realtime-session]
+verify_jwt = true

@@ -16,6 +16,7 @@ import { Contact } from './pages/Contact';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsOfService } from './pages/TermsOfService';
 import { WisdomJourneyPage } from './pages/WisdomJourneyPage';
+import { AIAgent } from './pages/AIAgent';
 
 function AppContent() {
   const location = useLocation();
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/wisdom/:slug" element={<WisdomJourneyPage />} />
+          <Route path="/ai-agent" element={<AIAgent />} />
         </Routes>
       </main>
       {showFooter && <Footer />}

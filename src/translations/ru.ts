@@ -10,6 +10,7 @@ export const ru = {
     stepIn: "Войти",
     about: "О нас",
     contact: "Контакты",
+    aiAgent: "ИИ-Агент",
     signIn: "Вход",
     signUp: "Регистрация",
     signOut: "Выход",

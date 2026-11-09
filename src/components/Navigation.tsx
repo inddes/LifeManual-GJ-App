@@ -27,6 +27,7 @@ export const Navigation: React.FC = () => {
     { name: t.nav.home, path: '/' },
     { name: t.nav.mindfulness, path: '/mindfulness' },
     { name: t.nav.meditation, path: '/meditation' },
+    { name: t.nav.aiAgent, path: '/ai-agent' },
   ];
 
   const currentLanguage = languages.find(lang => lang.code === language);

@@ -10,6 +10,7 @@ export const de = {
     stepIn: "Eintreten",
     about: "Über uns",
     contact: "Kontakt",
+    aiAgent: "KI-Agent",
     signIn: "Anmelden",
     signUp: "Registrieren",
     signOut: "Abmelden",

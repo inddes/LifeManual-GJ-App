@@ -1,0 +1,17 @@
+{
+  "projectId": "60960304",
+  "functions": {
+    "fetch-bg-verse": {
+      "hasChanged": false,
+      "hash": "3dff52279d28caee2005d52756ef93d67777de49ceb23f012c85435bb3a15881"
+    },
+    "ai-chat": {
+      "hasChanged": false,
+      "hash": "742ed0aa1058f39db6fb1a32ef4f84ccf6dfd9feae2dd67eb1018fe383a4948a"
+    },
+    "realtime-session": {
+      "hasChanged": false,
+      "hash": "873e1127dfd62c8ffa4af483473348a6398123874b10e69fd5949e78f4a7214d"
+    }
+  }
+}

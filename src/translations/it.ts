@@ -10,6 +10,7 @@ export const it = {
     stepIn: "Entra",
     about: "Chi siamo",
     contact: "Contatti",
+    aiAgent: "Agente IA",
     signIn: "Accedi",
     signUp: "Registrati",
     signOut: "Esci",
