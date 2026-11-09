@@ -40,19 +40,19 @@ export const AIAgent: React.FC = () => {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-heading font-bold text-spiritual-brown mb-4">
-            LifeManual <span className="text-gradient">AI Agent</span>
+            LifeManual <span className="text-gradient">AI Companion</span>
           </h1>
 
           <p className="text-lg md:text-xl text-spiritual-brown/80 max-w-3xl mx-auto leading-relaxed mb-8">
-            A real-time AI assistant powered by the OpenAI Realtime API. Chat by text
-            or speak naturally with two-way voice — exploring mindfulness, meditation,
-            and the timeless wisdom of the Bhagavad Gita.
+            A friendly, supportive AI companion powered by Vapi. Chat by text or
+            speak naturally with two-way voice — reflecting on your goals, building
+            positive habits, and finding practical ways to improve your life.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <FeatureBadge icon={<MessageSquare className="w-4 h-4" />} label="Streaming Text Chat" />
             <FeatureBadge icon={<Mic className="w-4 h-4" />} label="Real-time Voice" />
-            <FeatureBadge icon={<Sparkles className="w-4 h-4" />} label="GPT-4o Powered" />
+            <FeatureBadge icon={<Sparkles className="w-4 h-4" />} label="Vapi Powered" />
           </div>
         </div>
       </section>
@@ -127,9 +127,9 @@ export const AIAgent: React.FC = () => {
                 Natural Voice
               </h3>
               <p className="text-sm text-spiritual-brown/70 leading-relaxed">
-                WebRTC-based audio connection to OpenAI Realtime with live
-                voice-activity visualization, connection status indicators, and
-                AI speech interruption (barge-in).
+                Vapi Web SDK voice connection with live voice-activity
+                visualization, connection status indicators, microphone mute
+                controls, and AI speech interruption (barge-in).
               </p>
             </div>
 
@@ -141,9 +141,9 @@ export const AIAgent: React.FC = () => {
                 Secure Backend
               </h3>
               <p className="text-sm text-spiritual-brown/70 leading-relaxed">
-                Permanent API keys stay server-side. The voice agent uses
-                short-lived ephemeral session tokens issued by a secure Edge
-                Function endpoint.
+                The Vapi private API key stays server-side in a Supabase Edge
+                Function. The browser only holds a domain-restricted public key,
+                so secrets never reach the frontend.
               </p>
             </div>
           </div>

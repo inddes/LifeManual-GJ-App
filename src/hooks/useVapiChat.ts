@@ -13,7 +13,7 @@ const WELCOME: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
   content:
-    "Namaste. I'm the LifeManual AI Assistant, here to explore mindfulness, meditation, and the wisdom of the Bhagavad Gita with you. How can I support your journey today?",
+    "Hello and welcome to LifeManual. I'm your AI companion. I'm here to help you reflect, explore your goals and find practical ways to make positive changes in your life. What would you like to talk about today?",
   timestamp: Date.now(),
 };
 
