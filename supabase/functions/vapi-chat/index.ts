@@ -214,7 +214,6 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ chatId: upstreamBody.id, response: content });
   } catch (error) {
     console.error("[vapi-chat] function error", error instanceof Error ? error.message : "unknown");
-    console.error("[vapi-chat] function error", error instanceof Error ? error.message : "unknown");
     return jsonResponse(
       { error: "The assistant could not respond right now. Please try again." },
       500
