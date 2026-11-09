@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
-import { ChatWidget } from './components/ChatWidget';
+import { VapiAIWidget } from './components/VapiAIWidget';
 import { Home } from './pages/Home';
 import { SignUp } from './pages/SignUp';
 import { SignIn } from './pages/SignIn';
@@ -16,12 +16,11 @@ import { Contact } from './pages/Contact';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsOfService } from './pages/TermsOfService';
 import { WisdomJourneyPage } from './pages/WisdomJourneyPage';
-import { AIAgent } from './pages/AIAgent';
+
 
 function AppContent() {
   const location = useLocation();
   const showFooter = location.pathname === '/';
-  const showChatWidget = location.pathname !== '/ai-agent';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -44,11 +43,10 @@ function AppContent() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/wisdom/:slug" element={<WisdomJourneyPage />} />
-          <Route path="/ai-agent" element={<AIAgent />} />
         </Routes>
       </main>
       {showFooter && <Footer />}
-      {showChatWidget && <ChatWidget />}
+      <VapiAIWidget />
     </div>
   );
 }

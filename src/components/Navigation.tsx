@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sparkles, Globe, ChevronDown } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { languages } from '../translations';
 
@@ -11,7 +10,6 @@ export const Navigation: React.FC = () => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isEventsDropdownOpen, setIsEventsDropdownOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
   const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
@@ -27,7 +25,6 @@ export const Navigation: React.FC = () => {
     { name: t.nav.home, path: '/' },
     { name: t.nav.mindfulness, path: '/mindfulness' },
     { name: t.nav.meditation, path: '/meditation' },
-    { name: t.nav.aiAgent, path: '/ai-agent' },
   ];
 
   const currentLanguage = languages.find(lang => lang.code === language);
