@@ -143,6 +143,86 @@ export function useOpenAIRealtime() {
     userLineIdRef.current = null;
   }, [stopAudioLevelMonitoring]);
 
+  // --- Realtime event handler -------------------------------------------------
+
+  const handleRealtimeEvent = useCallback((event: Record<string, unknown>) => {
+    const type = event.type as string | undefined;
+
+    switch (type) {
+      case 'conversation.item.input_audio_transcription.completed': {
+        const transcript = event.transcript as string | undefined;
+        if (transcript) {
+          appendOrUpdateTranscript('user', transcript, true);
+        }
+        break;
+      }
+      case 'input_audio_buffer.speech_started': {
+        // Barge-in: the user started speaking, interrupt the assistant.
+        setIsAssistantSpeaking(false);
+        // Finalize any partial assistant transcript.
+        if (assistantLineIdRef.current) {
+          const id = assistantLineIdRef.current;
+          setTranscripts((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, final: true } : t))
+          );
+          assistantLineIdRef.current = null;
+        }
+        break;
+      }
+      case 'input_audio_buffer.speech_stopped': {
+        break;
+      }
+      case 'response.output_audio.delta': {
+        // Assistant is producing audio.
+        setIsAssistantSpeaking(true);
+        break;
+      }
+      case 'response.output_audio.done': {
+        setIsAssistantSpeaking(false);
+        break;
+      }
+      case 'response.audio_transcript.delta': {
+        const delta = event.delta as string | undefined;
+        if (delta) {
+          const id = assistantLineIdRef.current;
+          if (id) {
+            setTranscripts((prev) =>
+              prev.map((t) =>
+                t.id === id ? { ...t, text: t.text + delta } : t
+              )
+            );
+          } else {
+            const newId = uid();
+            assistantLineIdRef.current = newId;
+            setTranscripts((prev) => [
+              ...prev,
+              { id: newId, role: 'assistant', text: delta, final: false, timestamp: Date.now() },
+            ]);
+          }
+        }
+        break;
+      }
+      case 'response.audio_transcript.done': {
+        if (assistantLineIdRef.current) {
+          const id = assistantLineIdRef.current;
+          setTranscripts((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, final: true } : t))
+          );
+          assistantLineIdRef.current = null;
+        }
+        setIsAssistantSpeaking(false);
+        break;
+      }
+      case 'error': {
+        const message = (event.error as { message?: string } | undefined)?.message ?? 'Realtime error.';
+        setError(message);
+        break;
+      }
+      default:
+        break;
+    }
+  }, [appendOrUpdateTranscript]);
+
   // --- Connect ----------------------------------------------------------------
 
   const connect = useCallback(async () => {
@@ -265,87 +345,7 @@ export function useOpenAIRealtime() {
       setConnectionState('error');
       cleanup();
     }
-  }, [connectionState, createRemoteAudio, startAudioLevelMonitoring, cleanup]);
-
-  // --- Realtime event handler -------------------------------------------------
-
-  const handleRealtimeEvent = useCallback((event: Record<string, unknown>) {
-    const type = event.type as string | undefined;
-
-    switch (type) {
-      case 'conversation.item.input_audio_transcription.completed': {
-        const transcript = event.transcript as string | undefined;
-        if (transcript) {
-          appendOrUpdateTranscript('user', transcript, true);
-        }
-        break;
-      }
-      case 'input_audio_buffer.speech_started': {
-        // Barge-in: the user started speaking, interrupt the assistant.
-        setIsAssistantSpeaking(false);
-        // Finalize any partial assistant transcript.
-        if (assistantLineIdRef.current) {
-          const id = assistantLineIdRef.current;
-          setTranscripts((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, final: true } : t))
-          );
-          assistantLineIdRef.current = null;
-        }
-        break;
-      }
-      case 'input_audio_buffer.speech_stopped': {
-        break;
-      }
-      case 'response.output_audio.delta': {
-        // Assistant is producing audio.
-        setIsAssistantSpeaking(true);
-        break;
-      }
-      case 'response.output_audio.done': {
-        setIsAssistantSpeaking(false);
-        break;
-      }
-      case 'response.audio_transcript.delta': {
-        const delta = event.delta as string | undefined;
-        if (delta) {
-          const id = assistantLineIdRef.current;
-          if (id) {
-            setTranscripts((prev) =>
-              prev.map((t) =>
-                t.id === id ? { ...t, text: t.text + delta } : t
-              )
-            );
-          } else {
-            const newId = uid();
-            assistantLineIdRef.current = newId;
-            setTranscripts((prev) => [
-              ...prev,
-              { id: newId, role: 'assistant', text: delta, final: false, timestamp: Date.now() },
-            ]);
-          }
-        }
-        break;
-      }
-      case 'response.audio_transcript.done': {
-        if (assistantLineIdRef.current) {
-          const id = assistantLineIdRef.current;
-          setTranscripts((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, final: true } : t))
-          );
-          assistantLineIdRef.current = null;
-        }
-        setIsAssistantSpeaking(false);
-        break;
-      }
-      case 'error': {
-        const message = (event.error as { message?: string } | undefined)?.message ?? 'Realtime error.';
-        setError(message);
-        break;
-      }
-      default:
-        break;
-    }
-  }, [appendOrUpdateTranscript]);
+  }, [connectionState, createRemoteAudio, startAudioLevelMonitoring, cleanup, handleRealtimeEvent]);
 
   // --- Barge-in (manual interrupt) --------------------------------------------
 
