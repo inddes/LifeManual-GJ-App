@@ -21,6 +21,7 @@ import { AIAgent } from './pages/AIAgent';
 function AppContent() {
   const location = useLocation();
   const showFooter = location.pathname === '/';
+  const showChatWidget = location.pathname !== '/ai-agent';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -47,7 +48,7 @@ function AppContent() {
         </Routes>
       </main>
       {showFooter && <Footer />}
-      <ChatWidget />
+      {showChatWidget && <ChatWidget />}
     </div>
   );
 }

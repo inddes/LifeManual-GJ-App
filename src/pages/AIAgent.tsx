@@ -1,8 +1,8 @@
 import React from 'react';
 import { Sparkles, MessageSquare, Mic, Github, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
-import { AIChatPanel } from '../components/ai-agent/AIChatPanel';
-import { VoicePanel } from '../components/ai-agent/VoicePanel';
+import { VapiChatPanel } from '../components/ai-agent/VapiChatPanel';
+import { VapiVoicePanel } from '../components/ai-agent/VapiVoicePanel';
 
 const GITHUB_URL = 'https://github.com/your-username/lifemanual-ai-agent';
 
@@ -81,7 +81,7 @@ export const AIAgent: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <AIChatPanel />
+              <VapiChatPanel />
             </div>
 
             {/* Voice column */}
@@ -99,7 +99,7 @@ export const AIAgent: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <VoicePanel />
+              <VapiVoicePanel />
             </div>
           </div>
 
@@ -158,8 +158,8 @@ export const AIAgent: React.FC = () => {
           </h2>
           <p className="text-spiritual-brown/70 mb-6 max-w-2xl mx-auto">
             This AI agent is built with React, TypeScript, Supabase Edge Functions,
-            and the OpenAI Realtime API with WebRTC. Review the full implementation
-            on GitHub.
+            and the Vapi platform for unified chat and voice. Review the full
+            implementation on GitHub.
           </p>
           <a
             href={GITHUB_URL}
