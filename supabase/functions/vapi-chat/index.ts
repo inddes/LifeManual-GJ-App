@@ -6,73 +6,70 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+interface VapiChatResponse {
+  id?: string;
+  output?: unknown;
+}
+
+function getAssistantContent(output: unknown): string {
+  if (typeof output === "string") return output;
+
+  if (Array.isArray(output)) {
+    const assistantMessage = output.find(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (item as Record<string, unknown>).role === "assistant"
+    ) as Record<string, unknown> | undefined;
+    return typeof assistantMessage?.content === "string" ? assistantMessage.content : "";
+  }
+
+  if (output && typeof output === "object") {
+    const content = (output as Record<string, unknown>).content;
+    return typeof content === "string" ? content : "";
+  }
+
+  return "";
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
-
-  const vapiKey = Deno.env.get("VAPI_PRIVATE_API_KEY");
-  const assistantId = Deno.env.get("VITE_VAPI_ASSISTANT_ID");
-
-  if (!vapiKey) {
-    return new Response(
-      JSON.stringify({
-        error: "Vapi private API key is not configured. Add VAPI_PRIVATE_API_KEY as an Edge Function secret.",
-      }),
-      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  if (!assistantId) {
-    return new Response(
-      JSON.stringify({
-        error: "Vapi assistant ID is not configured. Add VITE_VAPI_ASSISTANT_ID as an Edge Function secret.",
-      }),
-      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  let input = "";
-  let previousChatId: string | undefined;
 
   try {
+    const vapiKey = Deno.env.get("VAPI_PRIVATE_API_KEY");
+    const assistantId = Deno.env.get("VITE_VAPI_ASSISTANT_ID");
+
+    if (!vapiKey || !assistantId) {
+      return jsonResponse({ error: "The chat service is not configured." }, 503);
+    }
+
     const body = await req.json();
-    if (typeof body.input === "string") {
-      input = body.input.slice(0, 4000);
-    }
-    if (typeof body.previousChatId === "string") {
-      previousChatId = body.previousChatId;
-    }
-  } catch {
-    return new Response(
-      JSON.stringify({ error: "Invalid request body" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+    const input = typeof body?.input === "string" ? body.input.trim() : "";
+    const previousChatId =
+      typeof body?.previousChatId === "string" ? body.previousChatId.trim() : "";
 
-  if (!input) {
-    return new Response(
-      JSON.stringify({ error: "No input provided" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+    if (!input || input.length > 4000) {
+      return jsonResponse({ error: "Please enter a message under 4000 characters." }, 400);
+    }
 
-  try {
-    const payload: Record<string, unknown> = {
+    const payload: Record<string, string> = {
       assistantId,
       input,
-      stream: true,
     };
-    if (previousChatId) {
-      payload.previousChatId = previousChatId;
-    }
+    if (previousChatId) payload.previousChatId = previousChatId;
 
     const upstream = await fetch("https://api.vapi.ai/chat", {
       method: "POST",
@@ -83,76 +80,27 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(payload),
     });
 
-    if (!upstream.ok || !upstream.body) {
-      const errText = await upstream.text();
-      return new Response(
-        JSON.stringify({ error: `Vapi chat request failed (${upstream.status}): ${errText.slice(0, 300)}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    const upstreamBody = (await upstream.json().catch(() => null)) as VapiChatResponse | null;
+    if (!upstream.ok || !upstreamBody) {
+      return jsonResponse(
+        { error: "The assistant could not respond right now. Please try again." },
+        502
       );
     }
 
-    // Pipe the SSE stream through, extracting content deltas for the frontend.
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+    const content = getAssistantContent(upstreamBody.output).trim();
+    if (!upstreamBody.id || !content) {
+      return jsonResponse(
+        { error: "The assistant returned an unreadable response. Please try again." },
+        502
+      );
+    }
 
-    const stream = new ReadableStream({
-      async pull(controller) {
-        const { done, value } = await reader.read();
-        if (done) {
-          controller.close();
-          return;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith("data:")) continue;
-
-          const data = trimmed.slice(5).trim();
-          if (data === "[DONE]") {
-            controller.close();
-            return;
-          }
-
-          try {
-            const parsed = JSON.parse(data);
-
-            // Forward content deltas to the frontend as plain text.
-            if (parsed.delta && parsed.path === "chat.output.content") {
-              controller.enqueue(new TextEncoder().encode(parsed.delta));
-            }
-
-            // Forward chat ID for multi-turn context.
-            if (parsed.chatId) {
-              controller.enqueue(
-                new TextEncoder().encode(`\n__CHAT_ID__:${parsed.chatId}__END_CHAT_ID__\n`)
-              );
-            }
-          } catch {
-            // Skip malformed SSE chunks.
-          }
-        }
-      },
-    });
-
-    return new Response(stream, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: `Streaming failed: ${message}` }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return jsonResponse({ chatId: upstreamBody.id, response: content });
+  } catch {
+    return jsonResponse(
+      { error: "The assistant could not respond right now. Please try again." },
+      500
     );
   }
 });

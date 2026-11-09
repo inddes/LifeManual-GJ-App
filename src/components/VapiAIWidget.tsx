@@ -14,6 +14,7 @@ import {
 import { useVapiWidget } from '@vapi-ai/client-sdk-react';
 import '@vapi-ai/client-sdk-react/styles';
 import { useMicDiagnostic } from '../hooks/useMicDiagnostic';
+import { useVapiChat } from '../hooks/useVapiChat';
 
 const VAPI_PUBLIC_KEY = import.meta.env.VITE_VAPI_PUBLIC_KEY as string;
 const VAPI_ASSISTANT_ID = import.meta.env.VITE_VAPI_ASSISTANT_ID as string;
@@ -41,6 +42,7 @@ export const VapiAIWidget: React.FC = () => {
   const [hasEndedCall, setHasEndedCall] = useState(false);
 
   const { checkMicrophone, setUserTranscriptReceived } = useMicDiagnostic();
+  const textChat = useVapiChat();
 
   const transcriptReceivedRef = useRef(false);
   const userTranscriptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,6 +129,7 @@ export const VapiAIWidget: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         widget={widget}
+        chat={textChat}
         chatInput={chatInput}
         onChatInputChange={setChatInput}
         onClose={() => setIsOpen(false)}
@@ -184,13 +187,14 @@ const VapiPanel: React.FC<{
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   widget: ReturnType<typeof useVapiWidget>;
+  chat: ReturnType<typeof useVapiChat>;
   chatInput: string;
   onChatInputChange: (value: string) => void;
   onClose: () => void;
   voiceError: string | null;
   hasEndedCall: boolean;
   onCheckMic: () => Promise<void>;
-}> = ({ activeTab, onTabChange, widget, chatInput, onChatInputChange, onClose, voiceError, hasEndedCall, onCheckMic }) => {
+}> = ({ activeTab, onTabChange, widget, chat, chatInput, onChatInputChange, onClose, voiceError, hasEndedCall, onCheckMic }) => {
   return (
     <div className="fixed bottom-20 right-5 z-50 w-[calc(100vw-2.5rem)] max-w-sm bg-spiritual-cream rounded-2xl border border-spiritual-gold/30 shadow-2xl overflow-hidden flex flex-col animate-slide-up">
       <VapiPanelHeader onClose={onClose} />
@@ -198,13 +202,14 @@ const VapiPanel: React.FC<{
       <div className="flex flex-col flex-grow min-h-0">
         {activeTab === 'chat' ? (
           <ChatTab
-            messages={widget.conversation}
-            isTyping={widget.chat.isTyping}
+            messages={chat.messages}
+            isTyping={chat.isStreaming}
+            error={chat.error}
             inputValue={chatInput}
             onInputChange={onChatInputChange}
             onSend={() => {
               if (chatInput.trim()) {
-                widget.chat.sendMessage(chatInput.trim());
+                void chat.sendMessage(chatInput.trim());
                 onChatInputChange('');
               }
             }}
@@ -282,12 +287,13 @@ const TabButton: React.FC<{
 );
 
 const ChatTab: React.FC<{
-  messages: ReturnType<typeof useVapiWidget>['conversation'];
+  messages: ReturnType<typeof useVapiChat>['messages'];
   isTyping: boolean;
+  error: string | null;
   inputValue: string;
   onInputChange: (value: string) => void;
   onSend: () => void;
-}> = ({ messages, isTyping, inputValue, onInputChange, onSend }) => {
+}> = ({ messages, isTyping, error, inputValue, onInputChange, onSend }) => {
   const messagesRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -320,6 +326,11 @@ const ChatTab: React.FC<{
             </div>
           </div>
         )}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs leading-relaxed text-red-600">
+            {error}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 px-4 py-3 border-t border-spiritual-gold/20 bg-spiritual-cream">
         <input
@@ -338,7 +349,7 @@ const ChatTab: React.FC<{
         />
         <button
           onClick={onSend}
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || isTyping}
           aria-label="Send message"
           className="flex-shrink-0 w-10 h-10 rounded-full bg-spiritual-gold text-spiritual-darkBrown flex items-center justify-center hover:bg-spiritual-saffron transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >

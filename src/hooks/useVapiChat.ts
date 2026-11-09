@@ -21,8 +21,11 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const CHAT_ID_MARKER_START = '__CHAT_ID__:';
-const CHAT_ID_MARKER_END = '__END_CHAT_ID__';
+interface ChatResponse {
+  chatId?: string;
+  response?: string;
+  error?: string;
+}
 
 export function useVapiChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
@@ -37,24 +40,15 @@ export function useVapiChat() {
       if (!trimmed || isStreaming) return;
 
       setError(null);
-
-      const userMsg: ChatMessage = {
-        id: uid(),
-        role: 'user',
-        content: trimmed,
-        timestamp: Date.now(),
-      };
-
-      const assistantId = uid();
-      const assistantPlaceholder: ChatMessage = {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        timestamp: Date.now(),
-        streaming: true,
-      };
-
-      setMessages((prev) => [...prev, userMsg, assistantPlaceholder]);
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: uid(),
+          role: 'user',
+          content: trimmed,
+          timestamp: Date.now(),
+        },
+      ]);
       setIsStreaming(true);
 
       const controller = new AbortController();
@@ -71,93 +65,36 @@ export function useVapiChat() {
           signal: controller.signal,
         });
 
+        const body = (await response.json().catch(() => null)) as Partial<ChatResponse> | null;
         if (!response.ok) {
-          let detail = `Request failed (${response.status})`;
-          try {
-            const body = await response.json();
-            if (body?.error) detail = body.error;
-          } catch {
-            // ignore parse error
-          }
-          throw new Error(detail);
-        }
-
-        if (!response.body) {
-          throw new Error('No response stream received.');
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          accumulated += chunk;
-
-          // Extract chat ID markers from the stream (for multi-turn context).
-          let cleaned = accumulated;
-          const markerIdx = cleaned.indexOf(CHAT_ID_MARKER_START);
-          if (markerIdx !== -1) {
-            const endIdx = cleaned.indexOf(CHAT_ID_MARKER_END, markerIdx);
-            if (endIdx !== -1) {
-              const idValue = cleaned.slice(
-                markerIdx + CHAT_ID_MARKER_START.length,
-                endIdx
-              );
-              chatIdRef.current = idValue;
-              cleaned =
-                cleaned.slice(0, markerIdx) + cleaned.slice(endIdx + CHAT_ID_MARKER_END.length);
-            }
-          }
-
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: cleaned } : m
-            )
+          throw new Error(
+            typeof body?.error === 'string'
+              ? body.error
+              : 'The assistant could not respond right now. Please try again.'
           );
         }
 
-        // Final cleanup of any remaining markers.
-        let finalContent = accumulated;
-        const markerIdx = finalContent.indexOf(CHAT_ID_MARKER_START);
-        if (markerIdx !== -1) {
-          const endIdx = finalContent.indexOf(CHAT_ID_MARKER_END, markerIdx);
-          if (endIdx !== -1) {
-            const idValue = finalContent.slice(
-              markerIdx + CHAT_ID_MARKER_START.length,
-              endIdx
-            );
-            chatIdRef.current = idValue;
-            finalContent =
-              finalContent.slice(0, markerIdx) +
-              finalContent.slice(endIdx + CHAT_ID_MARKER_END.length);
-          }
+        const assistantContent = typeof body?.response === 'string' ? body.response.trim() : '';
+        if (typeof body?.chatId !== 'string' || !assistantContent) {
+          throw new Error('The assistant returned an unreadable response. Please try again.');
         }
 
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: finalContent, streaming: false } : m
-          )
-        );
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, streaming: false } : m
-            )
-          );
-        } else {
-          const message = err instanceof Error ? err.message : 'Something went wrong.';
-          setError(message);
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: m.content || '(no response)', streaming: false }
-                : m
-            )
+        chatIdRef.current = body.chatId;
+        setMessages((previous) => [
+          ...previous,
+          {
+            id: uid(),
+            role: 'assistant',
+            content: assistantContent,
+            timestamp: Date.now(),
+          },
+        ]);
+      } catch (requestError) {
+        if (!(requestError instanceof DOMException && requestError.name === 'AbortError')) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : 'The assistant could not respond right now. Please try again.'
           );
         }
       } finally {
