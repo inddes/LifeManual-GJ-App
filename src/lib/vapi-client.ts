@@ -17,12 +17,26 @@ export function getAuthHeaders(): HeadersInit {
   };
 }
 
+export function isVapiConfigured(): boolean {
+  return (
+    !!VAPI_PUBLIC_KEY &&
+    VAPI_PUBLIC_KEY !== 'your-vapi-public-key-here' &&
+    !!VAPI_ASSISTANT_ID &&
+    VAPI_ASSISTANT_ID !== 'your-vapi-assistant-id-here'
+  );
+}
+
 let vapiInstance: Vapi | null = null;
 
 export function getVapiInstance(): Vapi {
   if (!VAPI_PUBLIC_KEY || VAPI_PUBLIC_KEY === 'your-vapi-public-key-here') {
     throw new Error(
-      'Vapi public key is not configured. Set VITE_VAPI_PUBLIC_KEY in your .env file.'
+      'Vapi public key is not configured. Set VITE_VAPI_PUBLIC_KEY in your environment variables.'
+    );
+  }
+  if (!VAPI_ASSISTANT_ID || VAPI_ASSISTANT_ID === 'your-vapi-assistant-id-here') {
+    throw new Error(
+      'Vapi assistant ID is not configured. Set VITE_VAPI_ASSISTANT_ID in your environment variables.'
     );
   }
   if (!vapiInstance) {

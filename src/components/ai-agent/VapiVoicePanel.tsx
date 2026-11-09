@@ -16,6 +16,7 @@ import {
   type VoiceConnectionState,
   type VoiceTranscriptLine,
 } from '../../hooks/useVapiVoice';
+import { isVapiConfigured } from '../../lib/vapi-client';
 import { VoiceVisualizer } from './VoiceVisualizer';
 
 function formatTime(ts: number): string {
@@ -89,6 +90,7 @@ export const VapiVoicePanel: React.FC = () => {
   const status = STATUS_LABELS[connectionState];
   const isConnected = connectionState === 'connected';
   const isBusy = connectionState === 'connecting';
+  const configured = isVapiConfigured();
 
   return (
     <div className="flex flex-col h-[600px] bg-spiritual-cream rounded-2xl border border-spiritual-gold/20 overflow-hidden shadow-lg">
@@ -144,7 +146,7 @@ export const VapiVoicePanel: React.FC = () => {
           {!isConnected ? (
             <button
               onClick={connect}
-              disabled={isBusy}
+              disabled={isBusy || !configured}
               className="flex items-center space-x-2 bg-spiritual-gold text-spiritual-darkBrown font-semibold px-6 py-3 rounded-full hover:bg-spiritual-saffron transition-colors disabled:opacity-50 disabled:cursor-not-allowed lm-focus-ring"
             >
               {isBusy ? (
@@ -203,6 +205,18 @@ export const VapiVoicePanel: React.FC = () => {
             </>
           )}
         </div>
+
+        {!configured && (
+          <div className="flex items-start space-x-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+            <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700">Voice not configured</p>
+              <p className="text-sm text-amber-600">
+                Add VITE_VAPI_PUBLIC_KEY and VITE_VAPI_ASSISTANT_ID to enable voice conversations.
+              </p>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="flex items-start space-x-2 bg-red-50 border border-red-200 rounded-lg p-3 mt-4">

@@ -20,6 +20,18 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const HANDLERS = new Set<keyof VapiEventHandlers>();
+
+interface VapiEventHandlers {
+  'call-start': () => void;
+  'call-end': () => void;
+  'speech-start': () => void;
+  'speech-end': () => void;
+  'volume-level': (volume: number) => void;
+  message: (message: Record<string, unknown>) => void;
+  error: (e: Record<string, unknown>) => void;
+}
+
 export function useVapiVoice() {
   const [connectionState, setConnectionState] = useState<VoiceConnectionState>('idle');
   const [transcripts, setTranscripts] = useState<VoiceTranscriptLine[]>([]);
@@ -29,6 +41,7 @@ export function useVapiVoice() {
   const [audioLevel, setAudioLevel] = useState(0);
 
   const vapiRef = useRef<Vapi | null>(null);
+  const listenersAttachedRef = useRef(false);
   const assistantLineIdRef = useRef<string | null>(null);
   const userLineIdRef = useRef<string | null>(null);
 
@@ -53,15 +66,9 @@ export function useVapiVoice() {
     []
   );
 
-  const connect = useCallback(async () => {
-    if (connectionState !== 'idle' && connectionState !== 'error') return;
-
-    setError(null);
-    setConnectionState('connecting');
-
-    try {
-      const vapi = getVapiInstance();
-      vapiRef.current = vapi;
+  const attachListeners = useCallback(
+    (vapi: Vapi) => {
+      if (listenersAttachedRef.current) return;
 
       vapi.on('call-start', () => {
         setConnectionState('connected');
@@ -76,7 +83,6 @@ export function useVapiVoice() {
 
       vapi.on('speech-start', () => {
         setIsAssistantSpeaking(true);
-        // Barge-in: user started speaking, finalize any partial assistant transcript.
         if (assistantLineIdRef.current) {
           const id = assistantLineIdRef.current;
           setTranscripts((prev) =>
@@ -104,7 +110,6 @@ export function useVapiVoice() {
             appendOrUpdateTranscript(role, transcript, isFinal);
           }
         } else if (type === 'conversation-update') {
-          // Handle conversation-level transcript updates if available.
           const delta = message.delta as string | undefined;
           if (delta) {
             appendOrUpdateTranscript('assistant', delta, false);
@@ -113,26 +118,76 @@ export function useVapiVoice() {
       });
 
       vapi.on('error', (e: Record<string, unknown>) => {
+        const errorType = e.type as string | undefined;
         const message =
           (e.message as string | undefined) ??
-          (e.type as string | undefined) ??
+          errorType ??
           'Voice connection error.';
-        setError(message);
+
+        if (
+          errorType === 'microphone-permission-denied' ||
+          errorType === 'mic-permission-denied' ||
+          (typeof message === 'string' && message.toLowerCase().includes('microphone'))
+        ) {
+          setError(
+            'Microphone access was denied. Please allow microphone permissions in your browser settings and try again.'
+          );
+        } else if (errorType === 'audio-start-failed') {
+          setError(
+            'Could not start audio playback. Make sure you interacted with the page (e.g. clicked a button) to allow audio, then try again.'
+          );
+        } else {
+          setError(message);
+        }
         setConnectionState('error');
       });
 
+      listenersAttachedRef.current = true;
+    },
+    [appendOrUpdateTranscript]
+  );
+
+  const connect = useCallback(async () => {
+    if (connectionState !== 'idle' && connectionState !== 'error') return;
+
+    setError(null);
+    setConnectionState('connecting');
+
+    try {
+      const vapi = getVapiInstance();
+      vapiRef.current = vapi;
+      attachListeners(vapi);
+
       await vapi.start(VAPI_ASSISTANT_ID);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to start voice session.';
+      let message: string;
+      if (err instanceof Error) {
+        const lower = err.message.toLowerCase();
+        if (lower.includes('microphone') || lower.includes('permission')) {
+          message =
+            'Microphone access was denied. Please allow microphone permissions in your browser settings and try again.';
+        } else if (lower.includes('network') || lower.includes('connection')) {
+          message =
+            'Could not connect to the voice service. Please check your internet connection and try again.';
+        } else {
+          message = err.message;
+        }
+      } else {
+        message = 'Failed to start voice session. Please try again.';
+      }
       setError(message);
       setConnectionState('error');
     }
-  }, [connectionState, appendOrUpdateTranscript]);
+  }, [connectionState, attachListeners]);
 
   const disconnect = useCallback(() => {
     const vapi = vapiRef.current;
     if (vapi) {
-      vapi.stop();
+      try {
+        vapi.stop();
+      } catch {
+        // Ignore errors when stopping.
+      }
     }
     setConnectionState('idle');
     setIsAssistantSpeaking(false);
@@ -145,14 +200,13 @@ export function useVapiVoice() {
   const interruptAssistant = useCallback(() => {
     const vapi = vapiRef.current;
     if (!vapi) return;
-    // Vapi handles barge-in natively; stop the assistant's current response.
     try {
       vapi.send({
         type: 'control',
         control: 'stop',
       } as never);
     } catch {
-      // If control message fails, the SDK still supports natural barge-in.
+      // Vapi supports natural barge-in — this is a best-effort explicit stop.
     }
     setIsAssistantSpeaking(false);
     if (assistantLineIdRef.current) {
@@ -182,7 +236,11 @@ export function useVapiVoice() {
     return () => {
       const vapi = vapiRef.current;
       if (vapi) {
-        vapi.stop();
+        try {
+          vapi.stop();
+        } catch {
+          // Ignore cleanup errors.
+        }
       }
     };
   }, []);
